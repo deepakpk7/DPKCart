@@ -1,0 +1,89 @@
+<div class="max-w-7xl mx-auto px-4 py-12">
+  {% paginate search.results by 9 %}
+    <!-- PAGE HEADER -->
+    <div class="text-center mb-10">
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">Search Results</h1>
+
+      <!-- SEARCH BAR -->
+      <form action="{{ routes.search_url }}" method="get" class="max-w-md mx-auto flex items-center border border-gray-300 rounded-full overflow-hidden shadow-sm">
+        <input 
+          type="search" 
+          name="q" 
+          placeholder="Search products..." 
+          value="{{ search.terms | escape }}" 
+          class="flex-1 px-5 py-3 text-gray-700 placeholder-gray-400 border-none focus:ring-0 focus:outline-none"
+        >
+        <button 
+          type="submit" 
+          class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 transition">
+          {% render 'icon-search' %}
+        </button>
+      </form>
+    </div>
+
+    <!-- RESULTS SECTION -->
+    {% if search.performed %}
+      {% if search.results.size > 0 %}
+        <p class="text-gray-500 text-center mb-8">
+          Found <span class="font-semibold">{{ search.results.size }}</span> result{% if search.results.size > 1 %}s{% endif %}
+          for “<span class="italic">{{ search.terms | escape }}</span>”
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {% for item in search.results %}
+            {% case item.object_type %}
+              {% when 'product' %}
+                <!-- PRODUCT CARD -->
+                <div class="border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
+                  <a href="{{ item.url }}" class="block relative">
+                    {% if item.featured_image %}
+                      <img 
+                        src="{{ item.featured_image | img_url: 'medium' }}" 
+                        alt="{{ item.title | escape }}" 
+                        class="w-full h-72 object-cover transition-transform duration-500 hover:scale-105"
+                      >
+                    {% else %}
+                      {{ 'product-1' | placeholder_svg_tag: 'w-full h-72 object-cover bg-gray-100' }}
+                    {% endif %}
+                  </a>
+                  <div class="p-5">
+                    <a href="{{ item.url }}" class="text-lg font-medium text-gray-900 hover:text-gray-700 block truncate">
+                      {{ item.title }}
+                    </a>
+                    <p class="text-gray-500 mt-1">{{ item.price | money }}</p>
+                    <a 
+                      href="{{ item.url }}" 
+                      class="inline-block mt-3 text-sm font-medium text-gray-900 border border-gray-300 rounded-md px-4 py-2 hover:bg-gray-900 hover:text-white transition">
+                      View Product
+                    </a>
+                  </div>
+                </div>
+              {% else %}
+                <!-- OTHER RESULT TYPES (optional) -->
+            {% endcase %}
+          {% endfor %}
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="mt-10">
+          {% render 'pagination', pagination: paginate %}
+        </div>
+
+      {% else %}
+        <!-- NO RESULTS FOUND -->
+        <div class="text-center py-16">
+          <p class="text-lg text-gray-700">
+            No results found for 
+            <span class="font-semibold">“{{ search.terms | escape }}”</span>.  
+            Try another keyword or check spelling.
+          </p>
+          <a 
+            href="{{ routes.all_products_collection_url }}" 
+            class="mt-6 inline-block bg-gray-900 text-white px-8 py-3 rounded-md hover:bg-gray-800 transition">
+            Browse All Products
+          </a>
+        </div>
+      {% endif %}
+    {% endif %}
+  {% endpaginate %}
+</div>

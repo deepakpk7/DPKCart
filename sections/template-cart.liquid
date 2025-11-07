@@ -1,0 +1,154 @@
+{% if cart.item_count > 0 %}
+  <div class="max-w-6xl mx-auto px-4 py-10">
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row items-center justify-between mb-10">
+      <h1 class="text-3xl font-bold text-gray-900">Your Cart</h1>
+      <a href="{{ routes.all_products_collection_url }}"
+         class="text-blue-600 hover:text-blue-800 font-medium underline mt-4 md:mt-0">
+        Continue Shopping
+      </a>
+    </div>
+
+    <!-- CART TABLE -->
+    <form action="{{ routes.cart_url }}" method="POST" novalidate>
+      <div class="overflow-x-auto bg-white shadow rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Product</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Quantity</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Total Price</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for item in cart.items %}
+              <tr>
+                <!-- Product Info -->
+                <td class="px-6 py-4">
+                  <div class="flex items-center space-x-4">
+                    <a href="{{ item.url }}">
+                      {% if item.image %}
+                        <img src="{{ item.image | img_url: 'small' }}" alt="{{ item.title | escape }}"
+                             class="w-20 h-20 object-cover rounded border">
+                      {% else %}
+                        {{ 'product-1' | placeholder_svg_tag: 'w-20 h-20 object-cover border' }}
+                      {% endif %}
+                    </a>
+                    <div>
+                      <a href="{{ item.url }}" class="font-medium text-gray-900 hover:text-gray-700">
+                        {{ item.product.title | truncatewords: 5 }}
+                      </a>
+                      <p class="text-sm text-gray-500">{{ item.variant.title }}</p>
+                      <a href="{{ routes.cart_change_url }}?line={{ forloop.index }}&quantity=0"
+                         class="text-sm font-medium text-red-500 hover:underline">Remove</a>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Quantity -->
+                <td class="px-6 py-4">
+                  <div class="flex items-center space-x-2">
+                    <button type="button"
+                            class="px-3 py-1 border border-gray-400 rounded-md text-gray-700 hover:bg-gray-100 font-bold"
+                            onclick="decreaseQuantity({{ forloop.index }})">
+                      −
+                    </button>
+                    <input type="number" name="updates[]" id="updates_{{ forloop.index }}" value="{{ item.quantity }}" min="0"
+                           class="w-16 text-center border rounded-md p-2 focus:ring focus:ring-gray-300 outline-none">
+                    <button type="button"
+                            class="px-3 py-1 border border-gray-400 rounded-md text-gray-700 hover:bg-gray-100 font-bold"
+                            onclick="increaseQuantity({{ forloop.index }})">
+                      +
+                    </button>
+                  </div>
+                </td>
+
+                <!-- Total -->
+                <td class="px-6 py-4 text-gray-900 font-medium">
+                  {{ item.line_price | money }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- NOTES + TOTAL -->
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between mt-10 space-y-6 md:space-y-0">
+        <div class="w-full md:w-1/2">
+          <label for="cart_note" class="block text-gray-700 font-medium mb-2">Cart Notes</label>
+          <textarea name="note" id="cart_note"
+                    class="w-full border rounded-md p-3 h-24 resize-none focus:ring focus:ring-gray-300"></textarea>
+        </div>
+
+        <!-- TOTAL + BUTTONS -->
+        <div class="w-full md:w-80 bg-gray-50 border rounded-lg p-6 shadow-sm">
+          {% for block in section.blocks %}
+            {% case block.type %}
+              {% when 'subtotal' %}
+                <h3 class="text-xl font-semibold mb-4">
+                  Subtotal:
+                  <span class="float-right text-gray-800">{{ cart.total_price | money }}</span>
+                </h3>
+              {% when 'update_button' %}
+                <button type="submit" name="update"
+                        class="w-full p-3 mt-3 border border-gray-700 text-gray-700 font-medium hover:bg-gray-700 hover:text-white rounded-md">
+                  Update Cart
+                </button>
+              {% when 'checkout_button' %}
+                <button type="submit" name="checkout"
+                        class="w-full p-3 mt-3 bg-gray-800 text-white font-medium hover:bg-gray-900 rounded-md">
+                  Checkout
+                </button>
+            {% endcase %}
+          {% endfor %}
+        </div>
+      </div>
+    </form>
+  </div>
+
+{% else %}
+  <!-- EMPTY CART -->
+  <div class="max-w-6xl mx-auto h-80 flex flex-col justify-center items-center text-center">
+    <h1 class="text-3xl font-bold text-gray-800 mb-4">Your cart is empty</h1>
+    <a href="{{ routes.all_products_collection_url }}"
+       class="px-8 py-3 bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900">
+      Continue Shopping
+    </a>
+  </div>
+{% endif %}
+
+<!-- JS for Quantity Buttons -->
+
+{% schema %}
+{
+  "name": "Template Cart",
+  "blocks": [
+    {
+      "type": "subtotal",
+      "name": "Subtotal",
+      "limit": 1
+    },
+    {
+      "type": "update_button",
+      "name": "Update Button",
+      "limit": 1
+    },
+    {
+      "type": "checkout_button",
+      "name": "Checkout Button",
+      "limit": 1
+    }
+  ]
+}
+{% endschema %}
+<script>
+  function increaseQuantity(index) {
+    const input = document.getElementById(`updates_${index}`);
+    input.stepUp();
+  }
+  function decreaseQuantity(index) {
+    const input = document.getElementById(`updates_${index}`);
+    if (input.value > 0) input.stepDown();
+  }
+</script>
